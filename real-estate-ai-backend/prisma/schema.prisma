@@ -1,0 +1,501 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+   id              String   @id @default(cuid())
+   email           String   @unique
+   password        String
+   name            String?
+   subscriptionTier String   @default("free")
+   createdAt       DateTime @default(now())
+   updatedAt       DateTime @updatedAt
+
+   // Enhanced Authentication Fields
+   emailVerified           Boolean   @default(false)
+   emailVerificationToken  String?
+   emailVerificationExpires DateTime?
+   passwordResetToken      String?
+   passwordResetExpires    DateTime?
+   mfaEnabled              Boolean   @default(false)
+   mfaSecret               String?
+   loginAttempts           Int       @default(0)
+   lockoutUntil            DateTime?
+   lastLoginAt             DateTime?
+   socialProvider          String?   // google, facebook, etc.
+   socialId                String?
+
+   // GDPR Compliance Fields
+   privacyPolicyAccepted     Boolean   @default(false)
+   privacyPolicyAcceptedAt   DateTime?
+   marketingConsent          Boolean   @default(false)
+   marketingConsentAt        DateTime?
+   dataProcessingConsent     Boolean   @default(false)
+   dataProcessingConsentAt   DateTime?
+   gdprDataRetentionOverride Boolean   @default(false)
+   accountDeletionRequested  Boolean   @default(false)
+   accountDeletionRequestedAt DateTime?
+   dataExportRequested       Boolean   @default(false)
+   dataExportRequestedAt     DateTime?
+   dataExportUrl             String?
+
+   // Relations
+    properties         Property[]
+    aiUsage           AIUsage[]
+    userConsent       UserConsent[]
+    dataProcessingLogs DataProcessingLog[]
+    photoEnhancements PhotoEnhancement[]
+    sessions          Session[]
+    auditLogs         AuditLog[]
+    consentLogs       ConsentLog[]
+    dataExports       DataExport[]
+    csrfTokens        CsrfToken[]
+    securityEvents    SecurityEvent[]
+
+   @@map("users")
+ }
+
+model Property {
+   id           String   @id @default(cuid())
+   userId       String
+   location     String
+   size         Int?
+   bedrooms     Int?
+   bathrooms    Int?
+   price        Float?
+   features     Json?    // Array of feature strings
+   propertyType String?
+   yearBuilt    Int?
+   garage       Int?     // Number of garage spaces
+   garden       Boolean?
+   pool         Boolean?
+   description  String? // Original property description
+   images       Json?    // Array of image URLs
+   coordinates  Json?    // {lat: number, lng: number}
+   createdAt    DateTime @default(now())
+   updatedAt    DateTime @updatedAt
+
+   // Relations
+   user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+   generatedContent GeneratedContent[]
+   comparableSales  ComparableSale[]
+
+   // Indexes for search and filtering
+   @@index([location])
+   @@index([propertyType])
+   @@index([price])
+   @@index([bedrooms, bathrooms])
+
+   @@map("properties")
+ }
+
+model GeneratedContent {
+   id           String   @id @default(cuid())
+   propertyId   String
+   platform     String   // property24, facebook, whatsapp
+   tone         String   // professional, enthusiastic, luxury, friendly, formal
+   length       String   // short, full
+   content      String
+   wordCount    Int?
+   tokensUsed   Int?
+   cost         Float?   // Cost of generation in USD
+   cacheKey     String?  // For Redis caching
+   isCached     Boolean  @default(false)
+   cacheExpiry  DateTime?
+   createdAt    DateTime @default(now())
+   updatedAt    DateTime @updatedAt
+
+   // Relations
+   property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+   // Indexes for performance
+   @@index([propertyId, platform, tone, length])
+   @@index([cacheKey])
+   @@index([isCached, cacheExpiry])
+
+   @@map("generated_content")
+ }
+
+model AIUsage {
+   id           String   @id @default(cuid())
+   userId       String
+   apiCalls     Int      @default(0)
+   cost         Float    @default(0)
+   tokensUsed   Int      @default(0)
+   model        String   @default("gpt-4")
+   operation    String   // "generate", "preview", "regenerate"
+   platform     String?  // property24, facebook, whatsapp
+   tone         String?  // professional, enthusiastic, luxury, friendly, formal
+   length       String?  // short, full
+   date         DateTime @default(now())
+
+   // Relations
+   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+   // Indexes for analytics
+   @@index([userId, date])
+   @@index([platform, tone, length])
+   @@index([date])
+
+   @@map("ai_usage")
+ }
+
+model ContentTemplate {
+   id              String   @id @default(cuid())
+   platform        String   // property24, facebook, whatsapp
+   tone            String   // professional, enthusiastic, luxury, friendly, formal
+   length          String   // short, full
+   promptTemplate  String
+   isActive        Boolean  @default(true)
+   usageCount      Int      @default(0)
+   successRate     Float?   // Track success rate of generations using this template
+   createdAt       DateTime @default(now())
+   updatedAt       DateTime @updatedAt
+
+   // Indexes for performance
+   @@index([platform, tone, length])
+   @@index([isActive])
+
+   @@map("content_templates")
+ }
+
+model UserConsent {
+  id         String   @id @default(cuid())
+  userId     String
+  consentType String
+  grantedAt  DateTime @default(now())
+  expiresAt  DateTime?
+  ipAddress  String?
+  userAgent  String?
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_consent")
+}
+
+model DataProcessingLog {
+   id        String   @id @default(cuid())
+   userId    String?
+   action    String
+   resource  String?
+   details   Json?
+   ipAddress String
+   userAgent String?
+   timestamp DateTime @default(now())
+
+   // Relations
+   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+   @@map("data_processing_log")
+ }
+
+model CacheMetadata {
+    id         String   @id @default(cuid())
+    cacheKey   String   @unique
+    platform   String   // property24, facebook, whatsapp
+    tone       String   // professional, enthusiastic, luxury, friendly, formal
+    length     String   // short, full
+    propertyId String
+    expiresAt  DateTime
+    hitCount   Int      @default(0)
+    createdAt  DateTime @default(now())
+
+    // Indexes for cache management
+    @@index([cacheKey])
+    @@index([expiresAt])
+    @@index([platform, tone, length])
+    @@index([propertyId])
+
+    @@map("cache_metadata")
+  }
+
+model PhotoEnhancement {
+     id             String   @id @default(cuid())
+     userId         String?
+     originalName   String
+     enhancedUrl    String?
+     orderId        String   @unique // Autoenhance.ai order ID
+     status         String   // pending, processing, completed, failed
+     progress       Int      @default(0)
+     errorMessage   String?
+     enhancementOptions Json? // Store enhancement settings
+     metadata       Json?    // Store processing metadata
+     createdAt      DateTime @default(now())
+     updatedAt      DateTime @updatedAt
+
+     // Relations
+     user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+     // Indexes for tracking and querying
+     @@index([userId, createdAt])
+     @@index([orderId])
+     @@index([status])
+     @@index([createdAt])
+
+     @@map("photo_enhancements")
+   }
+
+model MarketData {
+    id                String   @id @default(cuid())
+    location          String   // City, suburb, or area name
+    propertyType      String   // house, apartment, townhouse, etc.
+    dataSource        String   // property24, private, etc.
+    averagePrice      Float?   // Average sale price in the area
+    medianPrice       Float?   // Median sale price
+    pricePerSqm       Float?   // Average price per square meter
+    totalListings     Int?     // Total active listings
+    soldListings      Int?     // Properties sold in last period
+    averageDaysOnMarket Int?   // Average days properties stay on market
+    priceTrend        String?  // increasing, decreasing, stable
+    trendPercentage   Float?   // Percentage change over period
+    dataPeriod        String   // 3months, 6months, 1year, etc.
+    lastUpdated       DateTime @default(now())
+    nextUpdate        DateTime?
+    isActive          Boolean  @default(true)
+    metadata          Json?    // Additional market data
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+
+    // Relations
+    comparableSales   ComparableSale[]
+
+    // Indexes for performance
+    @@index([location, propertyType])
+    @@index([dataSource])
+    @@index([lastUpdated])
+    @@index([isActive])
+    @@index([location, propertyType, dataPeriod])
+
+    // Unique constraint for upsert operations
+    @@unique([location, propertyType, dataPeriod])
+
+    @@map("market_data")
+}
+
+model ComparableSale {
+     id                String   @id @default(cuid())
+     marketDataId      String
+     propertyId        String?  // Link to our Property model if applicable
+     address           String
+     suburb            String
+     city              String
+     propertyType      String
+     bedrooms          Int?
+     bathrooms         Int?
+     size              Int?     // Size in square meters
+     landSize          Int?     // Land size in square meters
+     salePrice         Float
+     saleDate          DateTime
+     daysOnMarket      Int?
+     source            String   // property24, private, etc.
+     description       String?
+     features          Json?    // Array of property features
+     coordinates       Json?    // {lat: number, lng: number}
+     images            Json?    // Array of image URLs
+     isActive          Boolean  @default(true)
+     createdAt         DateTime @default(now())
+     updatedAt         DateTime @updatedAt
+
+     // Relations
+     marketData MarketData @relation(fields: [marketDataId], references: [id], onDelete: Cascade)
+     property   Property?  @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+
+     // Indexes for performance
+     @@index([marketDataId])
+     @@index([propertyId])
+     @@index([suburb, city])
+     @@index([saleDate])
+     @@index([salePrice])
+     @@index([propertyType])
+
+     @@map("comparable_sales")
+ }
+
+model Session {
+   id           String   @id @default(cuid())
+   userId       String
+   sessionToken String   @unique
+   deviceInfo   Json?    // Browser, OS, device type
+   ipAddress    String
+   userAgent    String?
+   expiresAt    DateTime
+   createdAt    DateTime @default(now())
+   updatedAt    DateTime @updatedAt
+
+   // Relations
+   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+   csrfTokens CsrfToken[]
+
+   // Indexes
+   @@index([userId])
+   @@index([sessionToken])
+   @@index([expiresAt])
+
+   @@map("sessions")
+ }
+
+model AuditLog {
+   id        String   @id @default(cuid())
+   userId    String?
+   action    String   // login, logout, password_change, profile_update, etc.
+   resource  String?  // user, property, ai_content, etc.
+   resourceId String?
+   details   Json?    // Additional context
+   ipAddress String
+   userAgent String?
+   timestamp DateTime @default(now())
+
+   // Relations
+   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+   // Indexes
+   @@index([userId])
+   @@index([action])
+   @@index([timestamp])
+   @@index([resource, resourceId])
+
+   @@map("audit_logs")
+ }
+
+model ConsentLog {
+   id             String   @id @default(cuid())
+   userId         String
+   consentType    String   // privacy_policy, marketing, data_processing, cookies
+   consented      Boolean
+   ipAddress      String
+   userAgent      String?
+   consentVersion String?  // Version of the policy/consent form
+   timestamp      DateTime @default(now())
+
+   // Relations
+   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+   // Indexes
+   @@index([userId])
+   @@index([consentType])
+   @@index([timestamp])
+
+   @@map("consent_logs")
+ }
+
+model DataExport {
+    id          String   @id @default(cuid())
+    userId      String
+    requestId   String   @unique // UUID for tracking
+    status      String   @default("pending") // pending, processing, completed, failed
+    format      String   @default("json") // json, csv, xml
+    includes    Json?    // What data to include
+    fileUrl     String?
+    expiresAt   DateTime?
+    errorMessage String?
+    requestedAt DateTime @default(now())
+    completedAt DateTime?
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+
+    // Relations
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    // Indexes
+    @@index([userId])
+    @@index([requestId])
+    @@index([status])
+    @@index([expiresAt])
+
+    @@map("data_exports")
+  }
+
+model RateLimit {
+    id        String   @id @default(cuid())
+    key       String   @unique // IP address, user ID, or combined key
+    endpoint  String   // API endpoint being rate limited
+    hits      Int      @default(1)
+    windowStart DateTime @default(now())
+    windowEnd DateTime
+    blocked   Boolean  @default(false)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    // Indexes
+    @@index([key, endpoint])
+    @@index([windowEnd])
+    @@index([blocked])
+
+    @@map("rate_limits")
+  }
+
+model CsrfToken {
+    id        String   @id @default(cuid())
+    token     String   @unique
+    userId    String?
+    sessionId String?
+    expiresAt DateTime
+    createdAt DateTime @default(now())
+
+    // Relations
+    user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+    session Session? @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+    // Indexes
+    @@index([token])
+    @@index([expiresAt])
+    @@index([userId])
+    @@index([sessionId])
+
+    @@map("csrf_tokens")
+  }
+
+model DataRetentionPolicy {
+    id          String   @id @default(cuid())
+    name        String   @unique
+    description String?
+    dataType    String   // user_data, audit_logs, consent_logs, etc.
+    retentionPeriodDays Int
+    autoDelete  Boolean  @default(true)
+    isActive    Boolean  @default(true)
+    lastExecuted DateTime?
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+
+    // Indexes
+    @@index([dataType])
+    @@index([isActive])
+
+    @@map("data_retention_policies")
+  }
+
+model SecurityEvent {
+    id          String   @id @default(cuid())
+    userId      String?
+    eventType   String   // brute_force_attempt, suspicious_login, password_change, etc.
+    severity    String   @default("medium") // low, medium, high, critical
+    ipAddress   String
+    userAgent   String?
+    location    Json?    // Geolocation data
+    details     Json?    // Additional event details
+    resolved    Boolean  @default(false)
+    resolvedAt  DateTime?
+    resolvedBy  String?
+    createdAt   DateTime @default(now())
+
+    // Relations
+    user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+    // Indexes
+    @@index([userId])
+    @@index([eventType])
+    @@index([severity])
+    @@index([createdAt])
+    @@index([resolved])
+
+    @@map("security_events")
+  }
