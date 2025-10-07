@@ -4,7 +4,7 @@
   "description": "TaskLink SA - Local task and odd job marketplace for South Africa",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "npx tsc --noEmitOnError false",
     "start": "node dist/index.js",
     "dev": "ts-node -r tsconfig-paths/register src/index.ts",
     "dev:watch": "nodemon src/index.ts",
