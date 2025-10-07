@@ -132,13 +132,19 @@ export class AuthService {
     return crypto.randomBytes(32).toString('hex');
   }
 
-  static async createVerificationToken(email: string): Promise<string> {
+  static async createVerificationToken(userId: string, email: string): Promise<string> {
     const token = this.generateSecureToken();
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-    // In a real implementation, you'd store this in the database
-    // For now, we'll use a simple approach with Redis or in-memory storage
-    // This is a simplified version - in production, use proper token storage
+    // Store the token in the database
+    await prisma.emailVerificationToken.create({
+      data: {
+        token,
+        email,
+        userId,
+        expiresAt,
+      },
+    });
 
     return token;
   }

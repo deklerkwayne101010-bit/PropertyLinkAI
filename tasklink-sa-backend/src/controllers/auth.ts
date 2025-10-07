@@ -135,7 +135,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
     });
 
     // Generate email verification token
-    const verificationToken = AuthService.generateSecureToken();
+    const verificationToken = await AuthService.createVerificationToken(user.id, email);
 
     // Send verification email
     try {
@@ -462,8 +462,58 @@ export const verifyEmail = async (req: Request, res: Response, next: NextFunctio
       });
     }
 
-    // Verify token and get user (simplified implementation)
-    // In production, you'd store and verify the token properly
+    // Find the verification token in the database
+    const verificationToken = await prisma.emailVerificationToken.findUnique({
+      where: { token },
+      include: { user: true }
+    });
+
+    if (!verificationToken) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid verification token'
+      });
+    }
+
+    // Check if token has expired
+    if (verificationToken.expiresAt < new Date()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Verification token has expired'
+      });
+    }
+
+    // Check if token has already been used
+    if (verificationToken.used) {
+      return res.status(400).json({
+        success: false,
+        error: 'Verification token has already been used'
+      });
+    }
+
+    // Update user as verified
+    await prisma.user.update({
+      where: { id: verificationToken.userId },
+      data: {
+        isVerified: true,
+        verificationType: 'email'
+      }
+    });
+
+    // Mark token as used
+    await prisma.emailVerificationToken.update({
+      where: { token },
+      data: { used: true }
+    });
+
+    // Log verification event
+    await AuthService.logAuthEvent(
+      verificationToken.userId,
+      'EMAIL_VERIFIED',
+      'User',
+      verificationToken.userId,
+      { email: verificationToken.email }
+    );
 
     return res.json({
       success: true,

@@ -56,6 +56,8 @@ model User {
   disputesAgainst  Dispute[]       @relation("DisputeReportedUser")
   assignedDisputes Dispute[]       @relation("DisputeAssignedAdmin")
   applications     Application[]
+  emailVerificationTokens EmailVerificationToken[]
+  passwordResetTokens PasswordResetToken[]
 
   @@map("users")
 }
@@ -236,40 +238,70 @@ model AuditLog {
   @@map("audit_logs")
 }
 
+model EmailVerificationToken {
+   id        String   @id @default(cuid())
+   token     String   @unique
+   email     String
+   userId    String
+   expiresAt DateTime
+   used      Boolean  @default(false)
+   createdAt DateTime @default(now())
+
+   // Relations
+   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+   @@map("email_verification_tokens")
+ }
+
+model PasswordResetToken {
+   id        String   @id @default(cuid())
+   token     String   @unique
+   email     String
+   userId    String
+   expiresAt DateTime
+   used      Boolean  @default(false)
+   createdAt DateTime @default(now())
+
+   // Relations
+   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+   @@map("password_reset_tokens")
+ }
+
 model Dispute {
-  id              String       @id @default(cuid())
-  title           String
-  description     String
-  status          DisputeStatus @default(OPEN)
-  priority        JobPriority  @default(MEDIUM)
-  category        String       // "payment", "job_quality", "communication", etc.
+   id              String       @id @default(cuid())
+   title           String
+   description     String
+   status          DisputeStatus @default(OPEN)
+   priority        JobPriority  @default(MEDIUM)
+   category        String       // "payment", "job_quality", "communication", etc.
 
-  // Resolution
-  resolution      String?      // Admin's resolution decision
-  resolvedAt      DateTime?    // When dispute was resolved
-  closedAt        DateTime?    // When dispute was closed
+   // Resolution
+   resolution      String?      // Admin's resolution decision
+   resolvedAt      DateTime?    // When dispute was resolved
+   closedAt        DateTime?    // When dispute was closed
 
-  // Evidence and communication
-  evidence        Json?        // Array of evidence files/URLs
-  adminNotes      String?      // Internal admin notes
+   // Evidence and communication
+   evidence        Json?        // Array of evidence files/URLs
+   adminNotes      String?      // Internal admin notes
 
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+   createdAt       DateTime     @default(now())
+   updatedAt       DateTime     @updatedAt
 
-  // Relations
-  reporter        User         @relation("DisputeReporter", fields: [reporterId], references: [id])
-  reportedUser    User?        @relation("DisputeReportedUser", fields: [reportedUserId], references: [id])
-  job             Job?         @relation(fields: [jobId], references: [id])
-  assignedAdmin   User?        @relation("DisputeAssignedAdmin", fields: [assignedAdminId], references: [id])
+   // Relations
+   reporter        User         @relation("DisputeReporter", fields: [reporterId], references: [id])
+   reportedUser    User?        @relation("DisputeReportedUser", fields: [reportedUserId], references: [id])
+   job             Job?         @relation(fields: [jobId], references: [id])
+   assignedAdmin   User?        @relation("DisputeAssignedAdmin", fields: [assignedAdminId], references: [id])
 
-  // Foreign keys
-  reporterId      String       // User who reported the dispute
-  reportedUserId  String?      // User being reported (optional for general disputes)
-  jobId           String?      // Related job (optional)
-  assignedAdminId String?      // Admin handling the dispute
+   // Foreign keys
+   reporterId      String       // User who reported the dispute
+   reportedUserId  String?      // User being reported (optional for general disputes)
+   jobId           String?      // Related job (optional)
+   assignedAdminId String?      // Admin handling the dispute
 
-  @@map("disputes")
-}
+   @@map("disputes")
+ }
 
 // Enums
 enum UserRole {
