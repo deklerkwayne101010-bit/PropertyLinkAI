@@ -4,6 +4,8 @@ import { ThemeProvider } from 'styled-components';
 import { theme } from './styles/theme';
 import { GlobalStyles } from './styles/global';
 import Layout from './components/Layout/Layout';
+import PrivateRoute from './components/Auth/PrivateRoute';
+import PublicRoute from './components/Auth/PublicRoute';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -36,30 +38,30 @@ function App() {
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/email-verification" element={<EmailVerificationPage />} />
+            <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+            <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+            <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
+            <Route path="/email-verification" element={<PublicRoute><EmailVerificationPage /></PublicRoute>} />
 
-            {/* Protected Routes - simplified for now */}
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/jobs" element={<JobsPage />} />
-            <Route path="/jobs/:id" element={<JobDetailsPage />} />
-            <Route path="/post-job" element={<PostJobPage />} />
+            {/* Protected Routes */}
+            <Route path="/dashboard" element={<PrivateRoute><DashboardPage /></PrivateRoute>} />
+            <Route path="/jobs" element={<PrivateRoute><JobsPage /></PrivateRoute>} />
+            <Route path="/jobs/:id" element={<PrivateRoute><JobDetailsPage /></PrivateRoute>} />
+            <Route path="/post-job" element={<PrivateRoute><PostJobPage /></PrivateRoute>} />
 
             {/* Account Routes */}
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
+            <Route path="/settings" element={<PrivateRoute><SettingsPage /></PrivateRoute>} />
 
             {/* Business Routes */}
-            <Route path="/wallet" element={<WalletPage />} />
-            <Route path="/transactions" element={<TransactionsPage />} />
-            <Route path="/my-jobs" element={<MyJobsPage />} />
-            <Route path="/applications" element={<ApplicationsPage />} />
-            <Route path="/analytics" element={<AnalyticsPage />} />
-            <Route path="/earnings" element={<EarningsPage />} />
+            <Route path="/wallet" element={<PrivateRoute><WalletPage /></PrivateRoute>} />
+            <Route path="/transactions" element={<PrivateRoute><TransactionsPage /></PrivateRoute>} />
+            <Route path="/my-jobs" element={<PrivateRoute><MyJobsPage /></PrivateRoute>} />
+            <Route path="/applications" element={<PrivateRoute><ApplicationsPage /></PrivateRoute>} />
+            <Route path="/analytics" element={<PrivateRoute><AnalyticsPage /></PrivateRoute>} />
+            <Route path="/earnings" element={<PrivateRoute><EarningsPage /></PrivateRoute>} />
 
-            {/* Support Routes */}
+            {/* Support Routes - Public */}
             <Route path="/help" element={<HelpCenterPage />} />
             <Route path="/contact" element={<ContactUsPage />} />
             <Route path="/faq" element={<FAQPage />} />
