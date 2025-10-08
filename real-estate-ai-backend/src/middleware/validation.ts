@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import Joi from 'joi';
 
-export const validateBody = (schema: Joi.ObjectSchema) => {
+export const validateBody = (schema: Joi.ObjectSchema): (req: Request, res: Response, next: NextFunction) => void => {
   return (req: Request, res: Response, next: NextFunction) => {
     const { error, value } = schema.validate(req.body, {
       abortEarly: false,
@@ -25,7 +25,7 @@ export const validateBody = (schema: Joi.ObjectSchema) => {
   };
 };
 
-export const validateQuery = (schema: Joi.ObjectSchema) => {
+export const validateQuery = (schema: Joi.ObjectSchema): (req: Request, res: Response, next: NextFunction) => void => {
   return (req: Request, res: Response, next: NextFunction) => {
     const { error, value } = schema.validate(req.query, {
       abortEarly: false,
@@ -49,7 +49,7 @@ export const validateQuery = (schema: Joi.ObjectSchema) => {
   };
 };
 
-export const validateParams = (schema: Joi.ObjectSchema) => {
+export const validateParams = (schema: Joi.ObjectSchema): (req: Request, res: Response, next: NextFunction) => void => {
   return (req: Request, res: Response, next: NextFunction) => {
     const { error, value } = schema.validate(req.params, {
       abortEarly: false,

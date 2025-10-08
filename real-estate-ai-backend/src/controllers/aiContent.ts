@@ -330,9 +330,9 @@ export const testAllTemplates = async (req: AuthenticatedRequest, res: Response)
       summary: {
         totalTests: Object.keys(results).length * 3 * 2, // 3 platforms * 3 tones * 2 lengths
         successfulTests: Object.values(results).reduce((acc: number, platformResults: any) => {
-          return acc + Object.values(platformResults).reduce((acc2: number, toneResults: any) => {
-            return acc2 + Object.values(toneResults).filter((result: any) => result.success).length;
-          }, 0);
+          return acc + (Object.values(platformResults).reduce((acc2: number, toneResults: any) => {
+            return acc2 + (Object.values(toneResults).filter((result: any) => result.success) as any[]).length;
+          }, 0) as number);
         }, 0),
       },
     });

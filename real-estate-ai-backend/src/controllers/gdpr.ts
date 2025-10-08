@@ -21,11 +21,12 @@ export class GDPRController {
       });
 
       if (existingRequest) {
-        return res.status(429).json({
+        res.status(429).json({
           error: 'Data export request already in progress',
           requestId: existingRequest.requestId,
           status: existingRequest.status
         });
+        return;
       }
 
       // Create data export request
@@ -80,7 +81,8 @@ export class GDPRController {
       });
 
       if (!dataExport) {
-        return res.status(404).json({ error: 'Data export request not found' });
+        res.status(404).json({ error: 'Data export request not found' });
+        return;
       }
 
       res.json({
@@ -107,7 +109,8 @@ export class GDPRController {
 
       // Validate input
       if (!name && !email) {
-        return res.status(400).json({ error: 'At least one field (name or email) must be provided' });
+        res.status(400).json({ error: 'At least one field (name or email) must be provided' });
+        return;
       }
 
       const updateData: any = {};
@@ -118,7 +121,8 @@ export class GDPRController {
           where: { email }
         });
         if (existingUser && existingUser.id !== userId) {
-          return res.status(409).json({ error: 'Email address is already in use' });
+          res.status(409).json({ error: 'Email address is already in use' });
+          return;
         }
         updateData.email = email;
       }
@@ -156,10 +160,11 @@ export class GDPRController {
       const { reason, confirmDeletion = false } = req.body;
 
       if (!confirmDeletion) {
-        return res.status(400).json({
+        res.status(400).json({
           error: 'Account deletion must be explicitly confirmed',
           requiredField: 'confirmDeletion: true'
         });
+        return;
       }
 
       // Check if deletion is already requested
@@ -172,10 +177,11 @@ export class GDPRController {
       });
 
       if (user?.accountDeletionRequested) {
-        return res.status(409).json({
+        res.status(409).json({
           error: 'Account deletion already requested',
           requestedAt: user.accountDeletionRequestedAt
         });
+        return;
       }
 
       // Mark account for deletion (GDPR requires 30-day waiting period)

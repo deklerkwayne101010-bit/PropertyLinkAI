@@ -37,7 +37,7 @@ export const authenticateToken = (req: AuthRequest, res: Response, next: NextFun
   }
 };
 
-export const requireSubscription = (requiredTier: string) => {
+export const requireSubscription = (requiredTier: string): (req: AuthRequest, res: Response, next: NextFunction) => void => {
   return (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user) {
       return res.status(401).json({ error: 'Authentication required' });

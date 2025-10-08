@@ -178,7 +178,7 @@ export const getImageEditHistory = async (req: AuthenticatedRequest, res: Respon
     res.status(200).json({
       success: true,
       data: {
-        edits: edits.map(edit => ({
+        edits: edits.map((edit: any) => ({
           id: edit.id,
           originalName: edit.originalName,
           prompt: edit.prompt,
