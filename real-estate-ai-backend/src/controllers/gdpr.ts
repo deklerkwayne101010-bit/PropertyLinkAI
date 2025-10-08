@@ -274,7 +274,8 @@ export class GDPRController {
       });
 
       if (!user) {
-        return res.status(404).json({ error: 'User not found' });
+        res.status(404).json({ error: 'User not found' });
+        return;
       }
 
       // Structure data for export
@@ -336,9 +337,10 @@ export class GDPRController {
       const { consentType, granted, consentVersion = '1.0' } = req.body;
 
       if (!consentType || typeof granted !== 'boolean') {
-        return res.status(400).json({
+        res.status(400).json({
           error: 'consentType and granted (boolean) are required'
         });
+        return;
       }
 
       const validConsentTypes = [
@@ -351,10 +353,11 @@ export class GDPRController {
       ];
 
       if (!validConsentTypes.includes(consentType)) {
-        return res.status(400).json({
+        res.status(400).json({
           error: 'Invalid consent type',
           validTypes: validConsentTypes
         });
+        return;
       }
 
       // Update user consent
@@ -421,7 +424,8 @@ export class GDPRController {
       });
 
       if (!user) {
-        return res.status(404).json({ error: 'User not found' });
+        res.status(404).json({ error: 'User not found' });
+        return;
       }
 
       res.json({
