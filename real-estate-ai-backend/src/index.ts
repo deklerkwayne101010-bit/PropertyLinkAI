@@ -12,12 +12,7 @@ import marketDataRoutes from './routes/marketData.js';
 import gdprRoutes from './routes/gdpr.js';
 import aiContentRoutes from './routes/aiContent.js';
 import photoEnhancementRoutes from './routes/photoEnhancement.js';
-
-// Import modular architecture components
-import { pluginManager } from './modules/core/plugin-manager';
-import { serviceRegistry } from './modules/core/service-registry';
-import { eventBus } from './modules/core/event-bus';
-import { configManager } from './modules/core/config-manager';
+import aiImageEditorRoutes from './routes/aiImageEditor.js';
 
 const app = express();
 
@@ -49,35 +44,10 @@ app.use(gdprLogger);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Initialize modular architecture
-async function initializeModules() {
-  try {
-    console.log('🔧 Initializing modular architecture...');
-
-    // Load configuration sources
-    await configManager.loadAll();
-
-    // Register core services
-    serviceRegistry.register('config', configManager);
-    serviceRegistry.register('eventBus', eventBus);
-    serviceRegistry.register('pluginManager', pluginManager);
-
-    // Load modules from configuration
-    const modulesToLoad = configManager.get('modules.enabled', []);
-    for (const modulePath of modulesToLoad) {
-      try {
-        await pluginManager.loadModule(modulePath);
-        console.log(`✅ Module loaded: ${modulePath}`);
-      } catch (error) {
-        console.error(`❌ Failed to load module ${modulePath}:`, error);
-      }
-    }
-
-    console.log('🎉 Modular architecture initialized successfully');
-  } catch (error) {
-    console.error('❌ Failed to initialize modular architecture:', error);
-    // Continue with application startup even if modules fail
-  }
+// Initialize application (no modular architecture for now)
+async function initializeApp() {
+  console.log('🔧 Initializing Real Estate AI Backend...');
+  console.log('🎉 Application initialized successfully');
 }
 
 // Health check endpoint
@@ -97,6 +67,7 @@ app.use('/api/market-data', marketDataRoutes);
 app.use('/api/gdpr', gdprRoutes);
 app.use('/api/ai-content', aiContentRoutes);
 app.use('/api/photo-enhancement', photoEnhancementRoutes);
+app.use('/api/ai-image-edit', aiImageEditorRoutes);
 
 // 404 handler
 app.use((req, res) => {
@@ -106,11 +77,11 @@ app.use((req, res) => {
 // Global error handler (must be last)
 app.use(errorHandler);
 
-// Initialize modules and start server
+// Initialize and start server
 async function startServer() {
   try {
-    // Initialize modular architecture
-    await initializeModules();
+    // Initialize application
+    await initializeApp();
 
     // Start server
     const server = app.listen(config.server.port, () => {
@@ -118,15 +89,11 @@ async function startServer() {
       console.log(`📊 Environment: ${config.server.nodeEnv}`);
       console.log(`🔗 API Base URL: ${config.server.apiBaseUrl}`);
       console.log(`🔒 CORS Origin: ${config.security.corsOrigin}`);
-      console.log(`🔌 Modules loaded: ${pluginManager.getModules().length}`);
     });
 
     // Graceful shutdown handling
     const gracefulShutdown = async (signal: string) => {
       console.log(`${signal} received, shutting down gracefully`);
-
-      // Shutdown modules first
-      await pluginManager.shutdown();
 
       server.close(() => {
         console.log('Server closed');

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.announcementValidation = exports.disputeResolutionValidation = exports.paymentRefundValidation = exports.jobModerationValidation = exports.userStatusValidation = exports.getFailedLogins = exports.getSecurityEvents = exports.resolveDispute = exports.getAllDisputes = exports.createAnnouncement = exports.getSystemLogs = exports.getSystemHealth = exports.moderateReview = exports.getAllReviews = exports.getPaymentAnalytics = exports.getJobAnalytics = exports.getUserAnalytics = exports.getPlatformOverview = exports.getPaymentAnalyticsOverview = exports.processRefund = exports.getAllPayments = exports.getJobStats = exports.deleteJob = exports.moderateJob = exports.getAllJobs = exports.getUserStats = exports.deleteUser = exports.verifyUser = exports.updateUserStatus = exports.getUserDetails = exports.getAllUsers = void 0;
+exports.announcementValidation = exports.disputeResolutionValidation = exports.paymentRefundValidation = exports.jobModerationValidation = exports.userStatusValidation = exports.getFailedLogins = exports.getSecurityEvents = exports.resolveDispute = exports.getAllDisputes = exports.createAnnouncement = exports.getSystemLogs = exports.getSystemHealth = exports.getReviewStats = exports.moderateReview = exports.getAllReviews = exports.getPaymentAnalytics = exports.getJobAnalytics = exports.getUserAnalytics = exports.getPlatformOverview = exports.getPaymentAnalyticsOverview = exports.processRefund = exports.getAllPayments = exports.getJobStats = exports.deleteJob = exports.moderateJob = exports.getAllJobs = exports.getUserStats = exports.deleteUser = exports.verifyUser = exports.updateUserStatus = exports.getUserDetails = exports.getAllUsers = void 0;
 const client_1 = require("@prisma/client");
 const express_validator_1 = require("express-validator");
 const prisma = new client_1.PrismaClient();
@@ -92,7 +92,7 @@ const getAllUsers = async (req, res, next) => {
             skip: offset,
         });
         const total = await prisma.user.count({ where });
-        await logAdminAction(req.user?.id || 'system', 'USER_LIST_VIEW', 'User', 'BULK', undefined, { filters: req.query }, req.ip, req.get('User-Agent'));
+        await logAdminAction(req.user?.id ?? 'system', 'USER_LIST_VIEW', 'User', 'BULK', undefined, { filters: req.query }, req.ip, req.get('User-Agent'));
         return res.json({
             success: true,
             data: {
@@ -181,7 +181,7 @@ const getUserDetails = async (req, res, next) => {
                 error: 'User not found',
             });
         }
-        await logAdminAction(req.user?.id || 'system', 'USER_DETAIL_VIEW', 'User', id, undefined, undefined, req.ip, req.get('User-Agent'));
+        await logAdminAction(req.user?.id ?? 'system', 'USER_DETAIL_VIEW', 'User', id, undefined, undefined, req.ip, req.get('User-Agent'));
         return res.json({
             success: true,
             data: { user },
@@ -226,7 +226,7 @@ const updateUserStatus = async (req, res, next) => {
                 isSuspended: status === 'SUSPENDED',
                 suspensionReason: status === 'SUSPENDED' ? reason : null,
                 suspendedAt: status === 'SUSPENDED' ? new Date() : null,
-                suspendedBy: status === 'SUSPENDED' ? req.user?.id || 'system' : null,
+                suspendedBy: status === 'SUSPENDED' ? req.user?.id ?? 'system' : null,
             },
             select: {
                 id: true,
@@ -238,7 +238,7 @@ const updateUserStatus = async (req, res, next) => {
                 suspendedAt: true,
             },
         });
-        await logAdminAction(req.user?.id || 'system', `USER_${status}`, 'User', id, {
+        await logAdminAction(req.user?.id ?? 'system', `USER_${status}`, 'User', id, {
             isSuspended: currentUser.isSuspended,
             suspensionReason: currentUser.suspensionReason,
         }, {
@@ -288,7 +288,7 @@ const verifyUser = async (req, res, next) => {
                 verificationType: true,
             },
         });
-        await logAdminAction(req.user?.id || 'system', 'USER_VERIFY', 'User', id, {
+        await logAdminAction(req.user?.id ?? 'system', 'USER_VERIFY', 'User', id, {
             isVerified: currentUser.isVerified,
             verificationType: currentUser.verificationType,
         }, {
@@ -334,7 +334,7 @@ const deleteUser = async (req, res, next) => {
                 suspensionReason: 'Account deleted by admin',
             },
         });
-        await logAdminAction(req.user?.id || 'system', 'USER_DELETE', 'User', id, user, { deleted: true }, req.ip, req.get('User-Agent'));
+        await logAdminAction(req.user?.id ?? 'system', 'USER_DELETE', 'User', id, user, { deleted: true }, req.ip, req.get('User-Agent'));
         return res.json({
             success: true,
             message: 'User deleted successfully',
@@ -552,7 +552,7 @@ const moderateJob = async (req, res, next) => {
                 },
             },
         });
-        await logAdminAction(req.user?.id || 'system', `JOB_${action}`, 'Job', id, {
+        await logAdminAction(req.user?.id ?? 'system', `JOB_${action}`, 'Job', id, {
             status: currentJob.status,
         }, {
             status: newStatus,
@@ -589,7 +589,7 @@ const deleteJob = async (req, res, next) => {
         await prisma.job.delete({
             where: { id },
         });
-        await logAdminAction(req.user?.id || 'system', 'JOB_DELETE', 'Job', id, job, { deleted: true }, req.ip, req.get('User-Agent'));
+        await logAdminAction(req.user?.id ?? 'system', 'JOB_DELETE', 'Job', id, job, { deleted: true }, req.ip, req.get('User-Agent'));
         return res.json({
             success: true,
             message: 'Job deleted successfully',
@@ -800,7 +800,7 @@ const processRefund = async (req, res, next) => {
                 },
             },
         });
-        await logAdminAction(req.user?.id || 'system', 'PAYMENT_REFUND', 'Payment', id, {
+        await logAdminAction(req.user?.id ?? 'system', 'PAYMENT_REFUND', 'Payment', id, {
             status: payment.status,
             amount: payment.amount,
         }, {
@@ -1099,7 +1099,7 @@ const moderateReview = async (req, res, next) => {
             await prisma.review.delete({
                 where: { id },
             });
-            await logAdminAction(req.user?.id || 'system', 'REVIEW_DELETE', 'Review', id, currentReview, { deleted: true, reason }, req.ip, req.get('User-Agent'));
+            await logAdminAction(req.user?.id ?? 'system', 'REVIEW_DELETE', 'Review', id, currentReview, { deleted: true, reason }, req.ip, req.get('User-Agent'));
             return res.json({
                 success: true,
                 message: 'Review deleted successfully',
@@ -1115,7 +1115,7 @@ const moderateReview = async (req, res, next) => {
                 isPublic: true,
             },
         });
-        await logAdminAction(req.user?.id || 'system', `REVIEW_${action}`, 'Review', id, {
+        await logAdminAction(req.user?.id ?? 'system', `REVIEW_${action}`, 'Review', id, {
             isPublic: currentReview.isPublic,
         }, {
             isPublic: updatedReview.isPublic,
@@ -1132,6 +1132,98 @@ const moderateReview = async (req, res, next) => {
     }
 };
 exports.moderateReview = moderateReview;
+const getReviewStats = async (req, res, next) => {
+    try {
+        const [totalReviews, publicReviews, privateReviews, averageRating, fiveStarReviews, fourStarReviews, threeStarReviews, twoStarReviews, oneStarReviews,] = await Promise.all([
+            prisma.review.count(),
+            prisma.review.count({ where: { isPublic: true } }),
+            prisma.review.count({ where: { isPublic: false } }),
+            prisma.review.aggregate({
+                where: { isPublic: true },
+                _avg: { rating: true },
+            }),
+            prisma.review.count({ where: { rating: 5, isPublic: true } }),
+            prisma.review.count({ where: { rating: 4, isPublic: true } }),
+            prisma.review.count({ where: { rating: 3, isPublic: true } }),
+            prisma.review.count({ where: { rating: 2, isPublic: true } }),
+            prisma.review.count({ where: { rating: 1, isPublic: true } }),
+        ]);
+        const reviewTrends = await prisma.$queryRaw `
+      SELECT
+        DATE(createdAt) as date,
+        COUNT(*) as count
+      FROM reviews
+      WHERE createdAt >= DATE('now', '-30 days')
+      GROUP BY DATE(createdAt)
+      ORDER BY date DESC
+    `;
+        const topReviewers = await prisma.review.groupBy({
+            by: ['reviewerId'],
+            where: { isPublic: true },
+            _count: { id: true },
+            _avg: { rating: true },
+            orderBy: { _count: { id: 'desc' } },
+            take: 10,
+        });
+        const topReviewees = await prisma.review.groupBy({
+            by: ['revieweeId'],
+            where: { isPublic: true },
+            _count: { id: true },
+            _avg: { rating: true },
+            orderBy: { _count: { id: 'desc' } },
+            take: 10,
+        });
+        const topReviewerIds = topReviewers.map((r) => r.reviewerId);
+        const topRevieweeIds = topReviewees.map((r) => r.revieweeId);
+        const [reviewerUsers, revieweeUsers] = await Promise.all([
+            prisma.user.findMany({
+                where: { id: { in: topReviewerIds } },
+                select: { id: true, firstName: true, lastName: true, profileImage: true },
+            }),
+            prisma.user.findMany({
+                where: { id: { in: topRevieweeIds } },
+                select: { id: true, firstName: true, lastName: true, profileImage: true },
+            }),
+        ]);
+        const topReviewersWithDetails = topReviewers.map((reviewer) => ({
+            ...reviewer,
+            user: reviewerUsers.find((u) => u.id === reviewer.reviewerId),
+        }));
+        const topRevieweesWithDetails = topReviewees.map((reviewee) => ({
+            ...reviewee,
+            user: revieweeUsers.find((u) => u.id === reviewee.revieweeId),
+        }));
+        return res.json({
+            success: true,
+            data: {
+                overview: {
+                    totalReviews,
+                    publicReviews,
+                    privateReviews,
+                    averageRating: Math.round((averageRating._avg.rating || 0) * 100) / 100,
+                },
+                distribution: {
+                    fiveStarReviews,
+                    fourStarReviews,
+                    threeStarReviews,
+                    twoStarReviews,
+                    oneStarReviews,
+                },
+                trends: {
+                    reviewTrends,
+                },
+                leaders: {
+                    topReviewers: topReviewersWithDetails,
+                    topReviewees: topRevieweesWithDetails,
+                },
+            },
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+exports.getReviewStats = getReviewStats;
 const getSystemHealth = async (req, res, next) => {
     try {
         const dbStart = Date.now();
@@ -1253,7 +1345,7 @@ const createAnnouncement = async (req, res, next) => {
                 actionUrl: '/announcements',
             },
         })));
-        await logAdminAction(req.user?.id || 'system', 'ANNOUNCEMENT_CREATE', 'System', 'BULK', undefined, {
+        await logAdminAction(req.user?.id ?? 'system', 'ANNOUNCEMENT_CREATE', 'System', 'BULK', undefined, {
             title,
             message,
             priority,
@@ -1410,7 +1502,7 @@ const resolveDispute = async (req, res, next) => {
                 closedAt: true,
             },
         });
-        await logAdminAction(req.user?.id || 'system', `DISPUTE_${action}`, 'Dispute', id, {
+        await logAdminAction(req.user?.id ?? 'system', `DISPUTE_${action}`, 'Dispute', id, {
             status: currentDispute.status,
             resolution: currentDispute.resolution,
         }, {

@@ -26,6 +26,7 @@ const message_1 = __importDefault(require("@/routes/message"));
 const notification_1 = __importDefault(require("@/routes/notification"));
 const review_1 = __importDefault(require("@/routes/review"));
 const admin_1 = __importDefault(require("@/routes/admin"));
+const location_1 = __importDefault(require("@/routes/location"));
 const handlers_1 = require("@/socket/handlers");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
@@ -71,6 +72,7 @@ app.use('/api/messages', message_1.default);
 app.use('/api/notifications', notification_1.default);
 app.use('/api/reviews', review_1.default);
 app.use('/api/admin', admin_1.default);
+app.use('/api/location', location_1.default);
 app.get('/api', (req, res) => {
     res.status(200).json({
         name: 'TaskLink SA API',
@@ -86,6 +88,7 @@ app.get('/api', (req, res) => {
             messages: '/api/messages',
             notifications: '/api/notifications',
             reviews: '/api/reviews',
+            location: '/api/location',
             admin: '/api/admin'
         }
     });
@@ -93,23 +96,28 @@ app.get('/api', (req, res) => {
 app.use(notFoundHandler_1.notFoundHandler);
 app.use(errorHandler_1.errorHandler);
 (0, handlers_1.setupSocketHandlers)(io);
-const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => {
-    console.log(`🚀 TaskLink SA Server running on port ${PORT}`);
-    console.log(`📱 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🔗 API Base URL: ${process.env.API_BASE_URL || `http://localhost:${PORT}`}`);
-    console.log(`🔌 Socket.io server ready for connections`);
-});
-process.on('SIGTERM', () => {
-    console.log('SIGTERM received, shutting down gracefully');
-    server.close(() => {
-        console.log('Process terminated');
+if (process.env.VERCEL) {
+    module.exports = app;
+}
+else {
+    const PORT = process.env.PORT || 3001;
+    server.listen(PORT, () => {
+        console.log(`🚀 TaskLink SA Server running on port ${PORT}`);
+        console.log(`📱 Environment: ${process.env.NODE_ENV || 'development'}`);
+        console.log(`🔗 API Base URL: ${process.env.API_BASE_URL || `http://localhost:${PORT}`}`);
+        console.log(`🔌 Socket.io server ready for connections`);
     });
-});
-process.on('SIGINT', () => {
-    console.log('SIGINT received, shutting down gracefully');
-    server.close(() => {
-        console.log('Process terminated');
+    process.on('SIGTERM', () => {
+        console.log('SIGTERM received, shutting down gracefully');
+        server.close(() => {
+            console.log('Process terminated');
+        });
     });
-});
+    process.on('SIGINT', () => {
+        console.log('SIGINT received, shutting down gracefully');
+        server.close(() => {
+            console.log('Process terminated');
+        });
+    });
+}
 //# sourceMappingURL=index.js.map

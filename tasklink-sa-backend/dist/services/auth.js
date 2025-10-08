@@ -93,9 +93,17 @@ class AuthService {
     static generateSecureToken() {
         return crypto_1.default.randomBytes(32).toString('hex');
     }
-    static async createVerificationToken(email) {
+    static async createVerificationToken(userId, email) {
         const token = this.generateSecureToken();
         const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        await prisma.emailVerificationToken.create({
+            data: {
+                token,
+                email,
+                userId,
+                expiresAt,
+            },
+        });
         return token;
     }
     static async createPasswordResetToken(email) {

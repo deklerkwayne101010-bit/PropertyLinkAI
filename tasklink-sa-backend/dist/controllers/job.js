@@ -4,6 +4,7 @@ exports.makeJobFeatured = exports.searchJobs = exports.getNearbyJobs = exports.d
 const client_1 = require("@prisma/client");
 const express_validator_1 = require("express-validator");
 const google_maps_services_js_1 = require("@googlemaps/google-maps-services-js");
+const location_1 = require("../services/location");
 var JobStatus;
 (function (JobStatus) {
     JobStatus["DRAFT"] = "DRAFT";
@@ -54,36 +55,16 @@ exports.searchValidation = [
 ];
 const geocodeLocation = async (address) => {
     try {
-        const response = await googleMapsClient.geocode({
-            params: {
-                address: address + ', South Africa',
-                key: process.env.GOOGLE_MAPS_API_KEY,
-            },
-        });
-        if (response.data.results.length === 0) {
-            throw new Error('Location not found');
-        }
-        const locationData = response.data.results[0]?.geometry?.location;
-        if (!locationData) {
-            throw new Error('Location geometry not found');
-        }
-        const { lat, lng } = locationData;
-        return { lat, lng };
+        const result = await location_1.LocationService.geocodeAddress(address);
+        return result.coordinates;
     }
     catch (error) {
         console.error('Geocoding error:', error);
         throw new Error('Failed to geocode location');
     }
 };
-const calculateDistance = (lat1, lng1, lat2, lng2) => {
-    const R = 6371;
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLng = (lng2 - lng1) * Math.PI / 180;
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-            Math.sin(dLng / 2) * Math.sin(dLng / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
+const calculateDistance = (coord1, coord2) => {
+    return location_1.LocationService.calculateDistance(coord1, coord2, 'km');
 };
 const createJob = async (req, res, next) => {
     try {
@@ -267,7 +248,7 @@ const getJobs = async (req, res, next) => {
         if (userCoordinates) {
             jobsWithDistance = jobs.map((job) => {
                 if (job.coordinates) {
-                    const distance = calculateDistance(userCoordinates.lat, userCoordinates.lng, job.coordinates.lat, job.coordinates.lng);
+                    const distance = calculateDistance(userCoordinates, job.coordinates);
                     return { ...job, distance };
                 }
                 return job;
@@ -361,7 +342,7 @@ const getJobById = async (req, res, next) => {
         if (userId) {
             const userCoordinates = await getUserCoordinates(userId);
             if (userCoordinates && job.coordinates) {
-                const distance = calculateDistance(userCoordinates.lat, userCoordinates.lng, job.coordinates.lat, job.coordinates.lng);
+                const distance = calculateDistance(userCoordinates, job.coordinates);
                 jobWithDistance = { ...job, distance };
             }
         }
@@ -543,7 +524,7 @@ const getNearbyJobs = async (req, res, next) => {
         const jobsWithDistance = jobs
             .map((job) => {
             if (job.coordinates) {
-                const distance = calculateDistance(userCoordinates.lat, userCoordinates.lng, job.coordinates.lat, job.coordinates.lng);
+                const distance = calculateDistance(userCoordinates, job.coordinates);
                 return { ...job, distance };
             }
             return null;

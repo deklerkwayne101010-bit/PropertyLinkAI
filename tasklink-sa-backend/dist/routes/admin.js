@@ -86,6 +86,7 @@ router.put('/reviews/:id', [
     (0, express_validator_1.body)('action').isIn(['HIDE', 'DELETE']).withMessage('Action must be HIDE or DELETE'),
     (0, express_validator_1.body)('reason').optional().isLength({ min: 10 }).withMessage('Reason must be at least 10 characters'),
 ], admin_1.moderateReview);
+router.get('/reviews/stats', admin_1.getReviewStats);
 router.get('/system/health', admin_1.getSystemHealth);
 router.get('/system/logs', [
     (0, express_validator_1.query)('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),

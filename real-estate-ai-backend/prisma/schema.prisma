@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -53,6 +53,7 @@ model User {
     userConsent       UserConsent[]
     dataProcessingLogs DataProcessingLog[]
     photoEnhancements PhotoEnhancement[]
+    aiImageEdits      AIImageEdit[]
     sessions          Session[]
     auditLogs         AuditLog[]
     consentLogs       ConsentLog[]
@@ -474,28 +475,76 @@ model DataRetentionPolicy {
   }
 
 model SecurityEvent {
-    id          String   @id @default(cuid())
-    userId      String?
-    eventType   String   // brute_force_attempt, suspicious_login, password_change, etc.
-    severity    String   @default("medium") // low, medium, high, critical
-    ipAddress   String
-    userAgent   String?
-    location    Json?    // Geolocation data
-    details     Json?    // Additional event details
-    resolved    Boolean  @default(false)
-    resolvedAt  DateTime?
-    resolvedBy  String?
-    createdAt   DateTime @default(now())
+     id          String   @id @default(cuid())
+     userId      String?
+     eventType   String   // brute_force_attempt, suspicious_login, password_change, etc.
+     severity    String   @default("medium") // low, medium, high, critical
+     ipAddress   String
+     userAgent   String?
+     location    Json?    // Geolocation data
+     details     Json?    // Additional event details
+     resolved    Boolean  @default(false)
+     resolvedAt  DateTime?
+     resolvedBy  String?
+     createdAt   DateTime @default(now())
 
-    // Relations
-    user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+     // Relations
+     user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-    // Indexes
-    @@index([userId])
-    @@index([eventType])
-    @@index([severity])
-    @@index([createdAt])
-    @@index([resolved])
+     // Indexes
+     @@index([userId])
+     @@index([eventType])
+     @@index([severity])
+     @@index([createdAt])
+     @@index([resolved])
 
-    @@map("security_events")
-  }
+     @@map("security_events")
+   }
+
+model AIImageEdit {
+  id              String   @id @default(cuid())
+  userId          String?
+  sessionId       String?  // For anonymous users
+
+  // Original Image
+  originalImage   String   // Base64 encoded
+  originalName    String
+  originalSize    Int      // File size in bytes
+  imageFormat     String   // jpg, png, webp
+
+  // Edited Image
+  editedImage     String?  // Base64 encoded result
+  editedName      String?
+
+  // Processing Details
+  prompt          String   // User's natural language prompt
+  detectedAction  String   // remove, enhance, lighting, color
+  aiModel         String   // grounding-dino, stable-diffusion-inpainting, upscaler
+  processingSteps Json?    // Array of processing steps taken
+
+  // Status & Progress
+  status          String   @default("pending") // pending, processing, completed, failed
+  progress        Int      @default(0) // 0-100
+  errorMessage    String?
+
+  // Metadata
+  processingTime  Int?     // Processing time in milliseconds
+  apiCalls        Int      @default(0) // Number of API calls made
+  cost            Float?   // Estimated cost in USD
+
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  completedAt     DateTime?
+
+  // Relations
+  user            User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // Indexes
+  @@index([userId, createdAt])
+  @@index([sessionId, createdAt])
+  @@index([status])
+  @@index([createdAt])
+
+  @@map("ai_image_edits")
+}

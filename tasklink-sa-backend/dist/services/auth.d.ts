@@ -18,7 +18,7 @@ export declare class AuthService {
     static sendVerificationEmail(email: string, token: string): Promise<void>;
     static sendPasswordResetEmail(email: string, token: string): Promise<void>;
     static generateSecureToken(): string;
-    static createVerificationToken(email: string): Promise<string>;
+    static createVerificationToken(userId: string, email: string): Promise<string>;
     static createPasswordResetToken(email: string): Promise<string>;
     static validatePasswordStrength(password: string): Promise<{
         valid: boolean;

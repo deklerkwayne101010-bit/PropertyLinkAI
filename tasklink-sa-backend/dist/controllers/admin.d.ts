@@ -25,6 +25,7 @@ export declare const getJobAnalytics: (req: AdminAuthenticatedRequest, res: Resp
 export declare const getPaymentAnalytics: (req: AdminAuthenticatedRequest, res: Response, next: NextFunction) => Promise<Response<any, Record<string, any>> | undefined>;
 export declare const getAllReviews: (req: AdminAuthenticatedRequest, res: Response, next: NextFunction) => Promise<Response<any, Record<string, any>> | undefined>;
 export declare const moderateReview: (req: AdminAuthenticatedRequest, res: Response, next: NextFunction) => Promise<Response<any, Record<string, any>> | undefined>;
+export declare const getReviewStats: (req: AdminAuthenticatedRequest, res: Response, next: NextFunction) => Promise<Response<any, Record<string, any>> | undefined>;
 export declare const getSystemHealth: (req: AdminAuthenticatedRequest, res: Response, next: NextFunction) => Promise<Response<any, Record<string, any>> | undefined>;
 export declare const getSystemLogs: (req: AdminAuthenticatedRequest, res: Response, next: NextFunction) => Promise<Response<any, Record<string, any>> | undefined>;
 export declare const createAnnouncement: (req: AdminAuthenticatedRequest, res: Response, next: NextFunction) => Promise<Response<any, Record<string, any>> | undefined>;

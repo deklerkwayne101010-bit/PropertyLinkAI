@@ -22,11 +22,16 @@ export const generateContent = async (req: AuthenticatedRequest, res: Response):
 
     // Validation is now handled by middleware
 
+    if (!req.user?.id) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+
     // Check if user has permission to access this property
     const property = await prisma.property.findFirst({
       where: {
         id: propertyId,
-        userId: req.user?.id,
+        userId: req.user.id,
       },
     });
 
@@ -76,11 +81,16 @@ export const previewContent = async (req: AuthenticatedRequest, res: Response): 
 
     // Validation is now handled by middleware
 
+    if (!req.user?.id) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+
     // Check if user has permission to access this property
     const property = await prisma.property.findFirst({
       where: {
         id: propertyId,
-        userId: req.user?.id,
+        userId: req.user.id,
       },
     });
 
@@ -137,7 +147,7 @@ export const getGeneratedContent = async (req: AuthenticatedRequest, res: Respon
     const property = await prisma.property.findFirst({
       where: {
         id: propertyId,
-        userId: req.user?.id,
+        userId: req.user!.id,
       },
     });
 
@@ -245,6 +255,11 @@ export const getAIUsage = async (req: AuthenticatedRequest, res: Response): Prom
   try {
     const { startDate, endDate } = req.query;
 
+    if (!req.user?.id) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+
     // Build date filter
     const dateFilter: any = {};
     if (startDate) dateFilter.gte = new Date(startDate as string);
@@ -252,7 +267,7 @@ export const getAIUsage = async (req: AuthenticatedRequest, res: Response): Prom
 
     const usage = await prisma.aIUsage.findMany({
       where: {
-        userId: req.user?.id,
+        userId: req.user.id,
         ...(Object.keys(dateFilter).length > 0 && { date: dateFilter }),
       },
       orderBy: { date: 'desc' },
@@ -290,11 +305,16 @@ export const testAllTemplates = async (req: AuthenticatedRequest, res: Response)
   try {
     const { propertyId } = req.params;
 
+    if (!req.user?.id) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+
     // Check if user has permission to access this property
     const property = await prisma.property.findFirst({
       where: {
         id: propertyId,
-        userId: req.user?.id,
+        userId: req.user.id,
       },
     });
 

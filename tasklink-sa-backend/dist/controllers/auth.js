@@ -60,7 +60,7 @@ const register = async (req, res, next) => {
                 createdAt: true,
             }
         });
-        const verificationToken = auth_1.AuthService.generateSecureToken();
+        const verificationToken = await auth_1.AuthService.createVerificationToken(user.id, email);
         try {
             await auth_1.AuthService.sendVerificationEmail(email, verificationToken);
         }
@@ -281,6 +281,40 @@ const verifyEmail = async (req, res, next) => {
                 error: 'Verification token is required'
             });
         }
+        const verificationToken = await prisma.emailVerificationToken.findUnique({
+            where: { token },
+            include: { user: true }
+        });
+        if (!verificationToken) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid verification token'
+            });
+        }
+        if (verificationToken.expiresAt < new Date()) {
+            return res.status(400).json({
+                success: false,
+                error: 'Verification token has expired'
+            });
+        }
+        if (verificationToken.used) {
+            return res.status(400).json({
+                success: false,
+                error: 'Verification token has already been used'
+            });
+        }
+        await prisma.user.update({
+            where: { id: verificationToken.userId },
+            data: {
+                isVerified: true,
+                verificationType: 'email'
+            }
+        });
+        await prisma.emailVerificationToken.update({
+            where: { token },
+            data: { used: true }
+        });
+        await auth_1.AuthService.logAuthEvent(verificationToken.userId, 'EMAIL_VERIFIED', 'User', verificationToken.userId, { email: verificationToken.email });
         return res.json({
             success: true,
             message: 'Email verified successfully'
