@@ -5,7 +5,22 @@
       "src": "src/index.ts",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": ["src/**", "prisma/**", "node_modules/**"],
+        "includeFiles": [
+          "src/**",
+          "prisma/schema.prisma",
+          "prisma/migrations/**"
+        ],
+        "excludeFiles": [
+          "**/*.test.*",
+          "**/*.spec.*",
+          "**/__tests__/**",
+          "**/docs/**",
+          "**/*.md",
+          "**/create-tables.*",
+          "**/check-*.js",
+          "**/run-*.js",
+          "**/test-db.js"
+        ],
         "runtime": "nodejs18.x"
       }
     }
