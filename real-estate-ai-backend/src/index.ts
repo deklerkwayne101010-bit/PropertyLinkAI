@@ -5,14 +5,14 @@ import rateLimit from 'express-rate-limit';
 import { config } from './config';
 import { errorHandler } from './middleware/errorHandler';
 import { gdprLogger } from './middleware/gdprLogger';
-import authRoutes from './routes/auth.js';
-import userRoutes from './routes/user.js';
-import propertyRoutes from './routes/property.js';
-import marketDataRoutes from './routes/marketData.js';
-import gdprRoutes from './routes/gdpr.js';
-import aiContentRoutes from './routes/aiContent.js';
-import photoEnhancementRoutes from './routes/photoEnhancement.js';
-import aiImageEditorRoutes from './routes/aiImageEditor.js';
+import authRoutes from './routes/auth';
+import userRoutes from './routes/user';
+import propertyRoutes from './routes/property';
+import marketDataRoutes from './routes/marketData';
+import gdprRoutes from './routes/gdpr';
+import aiContentRoutes from './routes/aiContent';
+import photoEnhancementRoutes from './routes/photoEnhancement';
+import aiImageEditorRoutes from './routes/aiImageEditor';
 
 const app = express();
 
@@ -44,10 +44,13 @@ app.use(gdprLogger);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Initialize application (no modular architecture for now)
+// Initialize application for Vercel serverless functions
 async function initializeApp() {
   console.log('🔧 Initializing Real Estate AI Backend...');
   console.log('🎉 Application initialized successfully');
+  console.log(`📊 Environment: ${config.server.nodeEnv}`);
+  console.log(`🔗 API Base URL: ${config.server.apiBaseUrl}`);
+  console.log(`🔒 CORS Origin: ${config.security.corsOrigin}`);
 }
 
 // Health check endpoint
@@ -77,39 +80,8 @@ app.use((req, res) => {
 // Global error handler (must be last)
 app.use(errorHandler);
 
-// Initialize and start server
-async function startServer() {
-  try {
-    // Initialize application
-    await initializeApp();
+// Initialize the app
+initializeApp().catch(console.error);
 
-    // Start server
-    const server = app.listen(config.server.port, () => {
-      console.log(`🚀 Real Estate AI Backend running on port ${config.server.port}`);
-      console.log(`📊 Environment: ${config.server.nodeEnv}`);
-      console.log(`🔗 API Base URL: ${config.server.apiBaseUrl}`);
-      console.log(`🔒 CORS Origin: ${config.security.corsOrigin}`);
-    });
-
-    // Graceful shutdown handling
-    const gracefulShutdown = async (signal: string) => {
-      console.log(`${signal} received, shutting down gracefully`);
-
-      server.close(() => {
-        console.log('Server closed');
-        process.exit(0);
-      });
-    };
-
-    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-
-  } catch (error) {
-    console.error('Failed to start server:', error);
-    process.exit(1);
-  }
-}
-
-startServer();
-
+// Export the app for Vercel serverless functions
 export default app;
