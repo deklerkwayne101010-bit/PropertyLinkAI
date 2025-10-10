@@ -17,8 +17,7 @@
   ],
   "functions": {
     "src/index.ts": {
-      "runtime": "nodejs18.x",
-      "maxLambdaSize": "50mb"
+      "runtime": "nodejs18.x"
     }
   },
   "env": {
