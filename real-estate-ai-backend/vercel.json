@@ -5,7 +5,8 @@
       "src": "src/index.ts",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": ["src/**", "prisma/**", "node_modules/**"]
+        "includeFiles": ["src/**", "prisma/**", "node_modules/**"],
+        "runtime": "nodejs18.x"
       }
     }
   ],
@@ -15,11 +16,6 @@
       "dest": "src/index.ts"
     }
   ],
-  "functions": {
-    "src/index.ts": {
-      "runtime": "nodejs18.x"
-    }
-  },
   "env": {
     "NODE_ENV": "production"
   }
